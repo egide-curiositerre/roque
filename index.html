@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Roque · Apprendre les échecs</title>
+  <link rel="manifest" href="/roque/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Roque">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/roque/telephone/icone-180.png">
+  <script src="/roque/lib/sql.js/sql-wasm.js"></script>
+  <meta name="theme-color" content="#312e2b">
+  <script>
+    // Palette de couleurs choisie, appliquée avant l'affichage (pas de clignotement)
+    // (une palette par joueur : clé « roque-theme:<profil> », le profil principal garde « roque-theme »)
+    try {
+      var profil = (/(?:^|;\s*)roque-profil=([\w-]+)/.exec(document.cookie) || [])[1] || 'principal';
+      document.documentElement.dataset.theme = localStorage.getItem(profil === 'principal' ? 'roque-theme' : 'roque-theme:' + profil) || 'classique';
+    } catch (e) { document.documentElement.dataset.theme = 'classique'; }
+  </script>
+  <link rel="icon" href="/roque/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/roque/lib/chessground-assets/chessground.base.css">
+  <link rel="stylesheet" href="/roque/lib/chessground-assets/chessground.cburnett.css">
+  <link rel="stylesheet" href="/roque/plateau.css">
+  <link rel="stylesheet" href="/roque/style.css">
+</head>
+<body>
+  <nav class="navigation" aria-label="Navigation principale">
+    <a class="logo" href="#/"><span class="logo-icone">♞</span><span class="logo-texte">Roque</span></a>
+    <a class="profil-puce" id="profil-puce" href="#/profils" hidden></a>
+    <a href="#/" data-route="accueil"><span class="nav-icone"></span><span>Accueil</span></a>
+    <a href="#/problemes" data-route="problemes"><span class="nav-icone"></span><span>Problèmes</span></a>
+    <a href="#/rush" data-route="rush"><span class="nav-icone"></span><span>Rush</span></a>
+    <a href="#/entrainement" data-route="entrainement"><span class="nav-icone"></span><span>Entraînement</span></a>
+    <a href="#/jouer" data-route="jouer"><span class="nav-icone"></span><span>Jouer</span></a>
+    <a href="#/lecons" data-route="lecons"><span class="nav-icone"></span><span>Leçons</span></a>
+    <a href="#/progres" data-route="progres"><span class="nav-icone"></span><span>Progrès</span></a>
+    <a href="#/parametres" data-route="parametres"><span class="nav-icone"></span><span>Paramètres</span></a>
+    <div class="nav-bas"><div class="choix-theme" id="choix-theme" aria-label="Couleurs de l'application"></div><button class="bouton-son" id="bouton-voix" type="button"></button><button class="bouton-son" id="bouton-son" type="button"></button></div>
+  </nav>
+  <main id="contenu" tabindex="-1"></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    // Filet de sécurité : toute erreur s'affiche en clair (au lieu d'une page vide) et part dans le journal du serveur
+    (function () {
+      function signaler(message) {
+        try { navigator.sendBeacon('/api/journal', new Blob([JSON.stringify({ message: String(message), page: location.href, navigateur: navigator.userAgent })], { type: 'application/json' })); } catch (e) {}
+        var main = document.getElementById('contenu');
+        if (main && !main.querySelector('.carte-erreur')) {
+          main.insertAdjacentHTML('afterbegin', '<div class="carte carte-erreur" style="border-color:#e5534b;margin-bottom:16px"><h2>Le chargement a échoué</h2>'
+            + '<p class="doux">Une extension du navigateur (bloqueur de publicité…) empêche peut-être Roque de fonctionner. Désactive-la pour <strong>localhost</strong>, puis recharge la page.</p>'
+            + '<p class="petit-texte doux">Détail : ' + String(message).replace(/</g, '&lt;') + '</p></div>');
+        }
+      }
+      window.addEventListener('error', function (e) {
+        // Fichier qui n'a pas pu se charger (script, feuille de style) : on donne son adresse
+        var cible = e.target && (e.target.src || e.target.href);
+        signaler(e.message ? e.message + (e.filename ? ' (' + e.filename + ')' : '') : 'Fichier bloqué : ' + (cible || 'inconnu'));
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) { signaler(e.reason && e.reason.message || e.reason); });
+      // Un script bloqué ne déclenche pas toujours d'erreur : si rien ne s'affiche après 6 s, on le dit
+      setTimeout(function () {
+        var main = document.getElementById('contenu');
+        if (main && !main.children.length) signaler('Rien ne s\'est affiché après 6 secondes (script bloqué ?)');
+      }, 6000);
+    })();
+  </script>
+  <script type="module">
+    // Chargement de l'appli ; en cas d'échec, le message exact s'affiche et part dans le journal
+    import('/roque/telephone/demarrage.js').then(() => import('/roque/app.js')).catch((e) => window.dispatchEvent(new ErrorEvent('error', { message: `Chargement de l'appli : ${e.message}` })));
+  </script>
+</body>
+</html>

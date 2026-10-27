@@ -1,0 +1,14 @@
+{
+  "name": "Roque · Apprendre les échecs",
+  "short_name": "Roque",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#312e2b",
+  "theme_color": "#312e2b",
+  "icons": [
+    { "src": "telephone/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "telephone/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
