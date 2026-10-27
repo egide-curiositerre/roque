@@ -243,6 +243,7 @@ export async function vueEntrainement(main) {
     enCours = true; monTour = false; attenteDecision = false;
     gainApresMoi = 50;
     plateau.charger(DEPART, { orientation: moi === 'w' ? 'white' : 'black' });
+    plateau.activerPremoves(moi);   // jouer ses coups à l'avance pendant que l'ordinateur et la coach réfléchissent
     plateau.autoriser(null);
     plateau.fleches([]);
     poserBadge(null);
@@ -539,6 +540,7 @@ export async function vueEntrainement(main) {
     enCours = false;
     monTour = false;
     attenteDecision = false;
+    plateau.activerPremoves(null);
     plateau.autoriser(null);
     const jeu = plateau.jeu;
     let resultat = 0.5;

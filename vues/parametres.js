@@ -69,6 +69,7 @@ const REGLAGES = {
   jouer: [
     { cle: 'jouer.niveau', type: 'liste', titre: 'Niveau de l\'ordinateur par défaut', options: [['conseille', 'Conseillé pour moi'], ...NIVEAUX.map((n) => [String(n), String(n)])] },
     { cle: 'jouer.couleur', type: 'choix', titre: 'Ma couleur par défaut', options: [['w', 'Blancs'], ['b', 'Noirs'], ['x', 'Au hasard']] },
+    { cle: 'jouer.premoves', type: 'interrupteur', titre: 'Prémoves (jouer à l\'avance)', aide: 'Joue tes coups pendant que l\'ordinateur réfléchit, autant que tu veux, jusqu\'au mat. Ils partent dès que c\'est ton tour ; un prémove devenu impossible annule la suite.' },
     { cle: 'jouer.confirmerAbandon', type: 'interrupteur', titre: 'Demander confirmation avant d\'abandonner' },
     { cle: 'jouer.voix', type: 'interrupteur', titre: 'Annonces vocales pendant la partie', aide: 'Début de partie, « Échec ! », résultat.' },
   ],

@@ -40,6 +40,7 @@ export const DEFAUTS = {
   'jouer.niveau': 'conseille',           // conseille | 400 … 2600
   'jouer.couleur': 'w',                  // w | b | x
   'jouer.confirmerAbandon': true,
+  'jouer.premoves': true,                // jouer ses coups à l'avance (sans limite) pendant que l'adversaire réfléchit
   'jouer.voix': true,
   // Social (plusieurs joueurs)
   'social.quiJoue': true,

@@ -154,6 +154,7 @@ export async function vueJouer(main, params) {
 
   async function terminer(resultat, fin) {
     enCours = false;
+    plateau.activerPremoves(null);
     plateau.autoriser(null);
     const j = plateau.jeu;
     j.header('Event', 'Roque', 'Date', new Date().toISOString().slice(0, 10).replaceAll('-', '.'),
@@ -184,6 +185,7 @@ export async function vueJouer(main, params) {
     couleur = choixCouleur === 'x' ? (Math.random() < 0.5 ? 'w' : 'b') : choixCouleur;
     enCours = true;
     plateau.charger(DEPART, { orientation: couleur === 'w' ? 'white' : 'black' });
+    plateau.activerPremoves(couleur);   // jouer ses coups à l'avance pendant que l'ordinateur réfléchit
     $('reglages').hidden = true;
     $('partie').hidden = false;
     $('fin').hidden = true;

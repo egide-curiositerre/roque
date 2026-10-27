@@ -13,6 +13,14 @@ cg-board square.oc.move-dest { background: radial-gradient(transparent 76%, rgba
 cg-board square.move-dest:hover { background: rgba(255, 255, 255, .22); }
 cg-board square.last-move { background-color: var(--case-dernier); }
 cg-board square.selected { background-color: var(--case-dernier); filter: brightness(1.08); }
+/* Prémoves en attente : cases de départ et d'arrivée en bleu (comme chess.com) */
+cg-board square.premove-case { background-color: rgba(52, 120, 220, .55); }
+.info-premoves {
+  position: absolute; left: 50%; top: 3px; transform: translateX(-50%); z-index: 5; pointer-events: none;
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  background: rgba(30, 70, 140, .82); color: #fff; font: 700 11px var(--police);
+}
+.info-premoves[hidden] { display: none; }
 cg-board square.check { background: radial-gradient(ellipse at center, rgba(255, 46, 46, .95) 0%, rgba(231, 0, 0, .55) 35%, rgba(169, 0, 0, 0) 80%); }
 
 /* Coordonnées : couleur opposée à la case, petites et nettes */
