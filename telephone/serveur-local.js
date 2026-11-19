@@ -6,7 +6,7 @@ import { LECONS, MODULES } from '../serveur/lecons.js';
 import { NOMS_THEMES, THEMES_TRAVAIL } from '../serveur/themes.js';
 import { envelopper } from './base-navigateur.js';
 
-const VERSION = '20261027105952';
+const VERSION = '20261119102327';
 // Mêmes choix que profils.js (un seul joueur sur le téléphone)
 const AVATARS = ['♔', '♕', '♘', '♗', '♖', '🦁', '🐯', '🦊', '🐼', '🐸', '🦄', '🐙', '🚀', '⭐', '⚽', '🎮'];
 const COULEURS = ['#81b64c', '#3b82f6', '#f59e0b', '#ef4444', '#a855f7', '#14b8a6', '#ec4899', '#64748b'];
@@ -80,6 +80,7 @@ const ROUTES = [
   }],
   ['POST', /^\/tentative$/, ({ corps }) => ent.enregistrerTentative(corps)],
   ['GET', /^\/plan$/, () => ent.plan(LECONS)],
+  ['GET', /^\/calendrier$/, ({ q }) => ent.calendrier(LECONS, q.mois)],
   ['GET', /^\/bilan$/, () => ({
     historique: ent.historique(),
     themes: ent.statsThemes(),

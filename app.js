@@ -5,6 +5,7 @@ import { vueRush } from './vues/rush.js';
 import { vueJouer } from './vues/jouer.js';
 import { vueAnalyse } from './vues/revue-partie.js';
 import { vueLecons, vueLecon } from './vues/lecons.js';
+import { vueOuvertures } from './vues/ouvertures.js';
 import { vueProgres } from './vues/progres.js';
 import { vueEntrainement } from './vues/entrainement.js';
 import { vueCases } from './vues/cases.js';
@@ -26,6 +27,7 @@ const ROUTES = [
   { motif: /^\/entrainement\/cases$/, vue: vueCases, nav: 'entrainement' },
   { motif: /^\/jouer$/, vue: vueJouer, nav: 'jouer' },
   { motif: /^\/analyse\/(\d+)$/, vue: vueAnalyse, nav: 'jouer' },
+  { motif: /^\/ouvertures$/, vue: vueOuvertures, nav: 'ouvertures' },
   { motif: /^\/lecons$/, vue: vueLecons, nav: 'lecons' },
   { motif: /^\/lecons\/([\w-]+)$/, vue: vueLecon, nav: 'lecons' },
   { motif: /^\/progres$/, vue: vueProgres, nav: 'progres' },

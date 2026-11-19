@@ -90,6 +90,8 @@ export async function vueAccueil(main) {
       }).join('')}
     </section>
 
+    <section class="carte" style="margin-top:20px" id="calendrier"></section>
+
     <div class="grille grille-3" style="margin-top:20px" ${param('accueil.raccourcis') ? '' : 'hidden'}>
       <a class="carte action" href="#/entrainement"><span class="action-icone saphir">${ICONES.entrainement}</span>
         <span><h3>Entraînement</h3><span class="doux petit-texte">Joue avec ta coach : elle te parle et t'aide à chaque coup.</span></span></a>
@@ -100,6 +102,33 @@ export async function vueAccueil(main) {
       <a class="carte action" href="#/jouer"><span class="action-icone saphir">${ICONES.jouer}</span>
         <span><h3>Jouer</h3><span class="doux petit-texte">Contre l'ordinateur, avec l'analyse de tes erreurs.</span></span></a>
     </div>`;
+
+  // Calendrier : les jours se cochent tout seuls (plan du jour terminé en entier), impossible de cocher à la main
+  const carteCal = main.querySelector('#calendrier');
+  let moisCal = new Date().toLocaleDateString('sv-SE').slice(0, 7);
+  const decaler = (mois, n) => { const [a, m] = mois.split('-').map(Number); return new Date(a, m - 1 + n, 1).toLocaleDateString('sv-SE').slice(0, 7); };
+  async function afficherCalendrier() {
+    const c = await api(`/calendrier?mois=${moisCal}`);
+    const [a, m] = c.mois.split('-').map(Number);
+    const nom = new Date(a, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const cases = ['<span></span>'.repeat(c.premierJour)].concat(c.jours.map((j) => {
+      const num = Number(j.jour.slice(8));
+      const etat = j.fini ? 'fini' : j.jour > c.aujourdhui ? 'futur' : j.jour === c.aujourdhui ? 'aujourdhui' : 'rate';
+      return `<span class="jour-cal ${etat}" title="${j.fini ? 'Entraînement du jour terminé' : ''}">${j.fini ? ICONES.coche : num}${j.fini ? `<small>${num}</small>` : ''}</span>`;
+    })).join('');
+    carteCal.innerHTML = `<div class="entete-page" style="margin-bottom:10px;align-items:center">
+        <h2 style="margin:0;text-transform:capitalize">Calendrier · ${nom}</h2>
+        <div class="boutons"><span class="badge ${c.total ? 'vert' : ''}">${c.total} jour${c.total > 1 ? 's' : ''} terminé${c.total > 1 ? 's' : ''}</span>
+          <button class="bouton petit secondaire" data-mois="-1" title="Mois précédent">‹</button>
+          <button class="bouton petit secondaire" data-mois="1" title="Mois suivant">›</button></div></div>
+      <div class="grille-cal">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span class="entete-cal">${x}</span>`).join('')}${cases}</div>
+      <p class="doux petit-texte" style="margin:10px 0 0">Un jour se coche tout seul quand tout le plan du jour est terminé (pas avant, pas à la main).</p>`;
+  }
+  carteCal.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mois]');
+    if (b) { moisCal = decaler(moisCal, Number(b.dataset.mois)); afficherCalendrier(); }
+  });
+  afficherCalendrier();
 
   // Résumé parlé de la journée
   const resume = [

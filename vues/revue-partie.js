@@ -54,6 +54,7 @@ export async function vueAnalyse(main, params) {
           </div>
           <div id="verdict"></div>
           <p id="commentaire" class="coach-texte"></p>
+          <div id="mats" class="boutons" style="margin:0 0 10px" hidden></div>
           <div id="bandeau-mode" class="bandeau-mode" hidden></div>
           <div id="occasion" class="occasion" hidden></div>
           <div id="conseil" class="conseil" hidden></div>
@@ -83,6 +84,9 @@ export async function vueAnalyse(main, params) {
   const brillants = new Map();   // n° du coup → { uci, pv, joue } : coup brillant possible pour moi à ce moment
   let mode = 'partie';           // 'partie' | 'variante' (ligne de l'ordinateur rejouée) | 'defi' (trouver le coup brillant)
   let defi = null;
+  let fautes = [];                                          // n° des coups fautifs (les miens), dans l'ordre
+  let fautesParType = { gaffe: [], erreur: [], imprecision: [] };
+  let matsAffiches = [];         // enchaînements de mat proposés pour la position affichée
   const minuteursMode = new Set();
   const plusTard = (f, ms) => { const t = setTimeout(() => { minuteursMode.delete(t); f(); }, ms); minuteursMode.add(t); };
 
@@ -98,8 +102,18 @@ export async function vueAnalyse(main, params) {
       };
       html += `<span class="num">${i / 2 + 1}.</span>${btn(i)}${btn(i + 1)}`;
     }
-    $('coups').innerHTML = html;
-    $('coups').querySelector('.courant')?.scrollIntoView({ block: 'nearest' });
+    const liste = $('coups');
+    const haut = liste.scrollTop;
+    liste.innerHTML = html;
+    liste.scrollTop = haut;   // la liste garde sa position (sinon elle remonte à chaque coup)
+    majFautes();
+    // On fait défiler seulement la liste, jamais la page (scrollIntoView faisait descendre toute la page)
+    const c = liste.querySelector('.courant');
+    if (c) {
+      const r = c.getBoundingClientRect(), l = liste.getBoundingClientRect();
+      if (r.top < l.top) liste.scrollTop -= l.top - r.top + 8;
+      else if (r.bottom > l.bottom) liste.scrollTop += r.bottom - l.bottom + 8;
+    }
   }
 
   function aller(i, { dire = false, fin = null } = {}) {
@@ -145,6 +159,22 @@ export async function vueAnalyse(main, params) {
       oral = 'Position de départ. Appuie sur lecture, et je t\'explique la partie coup par coup.';
     }
 
+    // Mat forcé : un bouton pour voir l'enchaînement complet, coup par coup
+    const mats = [];
+    const avantEval = courant ? evals[courant - 1] : null;
+    const jouee = courant ? coups[courant - 1].from + coups[courant - 1].to + (coups[courant - 1].promotion || '') : null;
+    if (coups[courant - 1]?.color === moi && avantEval?.ligne?.mate > 0 && avantEval.ligne.pv?.length && avantEval.ligne.pv[0] !== jouee) {
+      mats.push({ base: courant - 1, ligne: avantEval.ligne, texte: `♚ Voir le mat que tu avais (en ${avantEval.ligne.mate} coup${avantEval.ligne.mate > 1 ? 's' : ''})` });
+    }
+    if (e?.ligne?.mate && e.ligne.pv?.length) {
+      const n = Math.abs(e.ligne.mate);
+      const pourMoi = (e.ligne.mate > 0) === (e.trait === moi);
+      mats.push({ base: courant, ligne: e.ligne, texte: `♚ Voir ${pourMoi ? 'ton mat en' : 'le mat adverse en'} ${n} coup${n > 1 ? 's' : ''}` });
+    }
+    $('mats').hidden = !mats.length;
+    $('mats').innerHTML = mats.map((m, i) => `<button class="bouton petit" data-mat="${i}">${m.texte}</button>`).join('');
+    matsAffiches = mats;
+
     // Meilleur coup selon l'ordinateur dans la position affichée (flèche bleue)
     const proposition = e?.ligne?.pv?.length ? conseil(positions[courant], e.ligne, moi) : null;
     $('conseil').hidden = !proposition;
@@ -184,6 +214,31 @@ export async function vueAnalyse(main, params) {
 
   // Navigation à la main : arrête la lecture et commente le coup choisi
   const naviguer = (i) => { arreterLecture(); aller(i, { dire: true }); };
+
+  // ---------- Navigation entre les fautes ----------
+  // Sur un écran étroit (iPhone), le résumé est sous l'échiquier : on remonte pour voir la position
+  const montrerPlateau = () => {
+    const r = $('plateau').getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) $('plateau').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  // Va à la faute suivante (sens 1) ou précédente (-1) de la liste, par rapport au coup affiché (boucle aux extrémités)
+  function allerFaute(ks, sens) {
+    if (!ks.length) return;
+    const ici = courant - 1;   // coup affiché
+    let k = sens > 0 ? ks.find((x) => x > ici) : [...ks].reverse().find((x) => x < ici);
+    if (k === undefined) k = sens > 0 ? ks[0] : ks[ks.length - 1];
+    naviguer(k + 1);
+    montrerPlateau();
+  }
+  // Met en évidence la faute affichée et le compteur « Faute 2 sur 5 »
+  function majFautes() {
+    const ici = courant - 1;
+    main.querySelectorAll('[data-faute]').forEach((b) => b.classList.toggle('faute-active', Number(b.dataset.faute) === ici));
+    if (!$('faute-pos')) return;
+    const n = fautes.indexOf(ici);
+    $('faute-pos').textContent = n >= 0 ? `Faute ${n + 1} sur ${fautes.length}` : `${fautes.length} faute${fautes.length > 1 ? 's' : ''}`;
+    $('faute-suiv').textContent = n < 0 && !fautes.some((x) => x > ici) ? 'Première faute ▶' : 'Faute suivante ▶';
+  }
   $('coups').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) naviguer(Number(b.dataset.i)); });
   $('debut').addEventListener('click', () => naviguer(0));
   $('prec').addEventListener('click', () => naviguer(courant - 1));
@@ -218,13 +273,13 @@ export async function vueAnalyse(main, params) {
   }
 
   // Rejoue sur l'échiquier une ligne de l'ordinateur, un coup par seconde
-  function jouerVariante(base, pv, titre, phrase) {
+  function jouerVariante(base, pv, titre, phrase, max = 6) {
     sortirMode();
     arreterLecture();
     mode = 'variante';
     const suite = [];
     const j = new Chess(base);
-    for (const u of pv.slice(0, 6)) {
+    for (const u of pv.slice(0, max)) {
       try { suite.push(j.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] })); } catch { break; }
     }
     plateau.charger(base);
@@ -233,6 +288,7 @@ export async function vueAnalyse(main, params) {
     $('meilleur').hidden = true;
     $('conseil').hidden = true;
     $('occasion').hidden = true;
+    $('mats').hidden = true;
     bandeau(`<strong>${titre}</strong><br><span class="ligne-variante">${suite.map((c, i) => `<span data-v="${i}">${echapper(sanFr(c.san))}</span>`).join(' ')}</span>`);
     parler(phrase);
     let i = 0;
@@ -280,6 +336,7 @@ export async function vueAnalyse(main, params) {
     $('meilleur').hidden = true;
     $('conseil').hidden = true;
     $('occasion').hidden = true;
+    $('mats').hidden = true;
     $('verdict').innerHTML = '<span class="verdict v-brillant">✨ Défi : coup brillant</span>';
     $('commentaire').innerHTML = `Dans la partie, tu as joué <strong>${echapper(sanFr(coups[k].san))}</strong>. Mais il y avait un <strong>coup brillant</strong> : un sacrifice qui gagne. À toi de le trouver !`;
     bandeau(`<strong>✨ Trouve le coup brillant</strong><br><span class="doux petit-texte">Joue directement sur l'échiquier.</span>`);
@@ -347,6 +404,18 @@ export async function vueAnalyse(main, params) {
       jouerVariante(positions[k], b.pv, '✨ Le coup brillant était :', `Le coup brillant était ${nomCoup(premier, true)}. Regarde la suite.`);
       return;
     }
+    const mt = e.target.closest('[data-mat]');
+    if (mt) {
+      const m = matsAffiches[Number(mt.dataset.mat)];
+      if (!m) return;
+      const n = Math.abs(m.ligne.mate);
+      jouerVariante(positions[m.base], m.ligne.pv, `Mat forcé en ${n} coup${n > 1 ? 's' : ''} :`, `Voici l'enchaînement du mat en ${n} coup${n > 1 ? 's' : ''}.`, Math.min(30, 2 * n));
+      return;
+    }
+    const f = e.target.closest('[data-faute]');
+    if (f) { naviguer(Number(f.dataset.faute) + 1); montrerPlateau(); return; }
+    const t = e.target.closest('[data-type-faute]');
+    if (t) { allerFaute(fautesParType[t.dataset.typeFaute] || [], 1); return; }
     if (e.target.closest('[data-revenir]')) revenir();
   });
 
@@ -428,20 +497,38 @@ export async function vueAnalyse(main, params) {
     const manques = [...brillants].filter(([, b]) => !b.joue).map(([k]) => k);
     const reussis = [...brillants].filter(([, b]) => b.joue).length;
     const numero = (k) => `${Math.floor(k / 2) + 1}${coups[k].color === 'w' ? '.' : '...'}`;
+    const liste = (cle) => notes.map((n, k) => (n?.cle === cle && coups[k].color === moi ? k : -1)).filter((k) => k >= 0);
+    // Pastille cliquable (passe d'une faute de ce type à la suivante) + un bouton par coup fautif
+    const bout = (cle, cl, mot) => {
+      const ks = liste(cle);
+      const pastille = `${ks.length} ${mot}${ks.length > 1 ? 's' : ''}`;
+      return `<div class="fautes-liste">${ks.length
+        ? `<button class="badge ${cl} badge-bouton" data-type-faute="${cle}" title="Aller à la ${mot} suivante">${pastille}</button>`
+        : `<span class="badge ${cl}">${pastille}</span>`}${ks.map((k) => `<button class="bouton petit secondaire" data-faute="${k}" title="Revenir à ce coup">${numero(k)} ${echapper(sanFr(coups[k].san))}</button>`).join('')}</div>`;
+    };
+    // Toutes mes fautes (gaffes, erreurs, imprécisions) dans l'ordre de la partie
+    fautes = notes.map((n, k) => (n && n.cle !== 'brillant' && coups[k].color === moi ? k : -1)).filter((k) => k >= 0);
+    fautesParType = { gaffe: liste('gaffe'), erreur: liste('erreur'), imprecision: liste('imprecision') };
     const premiere = notes.findIndex((n, k) => n && n.cle !== 'imprecision' && n.cle !== 'brillant' && coups[k].color === moi);
     $('resume').innerHTML = `
       <div class="statut">Ta précision : ${precision} %</div>
-      <div class="boutons" style="margin:10px 0">
-        <span class="badge rouge">${compte[moi].gaffe} gaffe${compte[moi].gaffe > 1 ? 's' : ''}</span>
-        <span class="badge or">${compte[moi].erreur} erreur${compte[moi].erreur > 1 ? 's' : ''}</span>
-        <span class="badge">${compte[moi].imprecision} imprécision${compte[moi].imprecision > 1 ? 's' : ''}</span>
+      <div style="margin:10px 0">
+        ${bout('gaffe', 'rouge', 'gaffe')}${bout('erreur', 'or', 'erreur')}${bout('imprecision', '', 'imprécision')}
       </div>
+      ${fautes.length ? `<div class="nav-fautes">
+        <button class="bouton petit secondaire" id="faute-prec" title="Faute précédente">◀</button>
+        <span class="petit-texte" id="faute-pos"></span>
+        <button class="bouton petit" id="faute-suiv" title="Faute suivante">Faute suivante ▶</button>
+      </div>` : ''}
+      <p class="doux petit-texte" style="margin:0">Touche un coup ou une pastille pour revenir à ce moment de la partie.</p>
       <p class="doux petit-texte">Ordinateur : ${Math.round(moyenne(parCamp[moi === 'w' ? 'b' : 'w']))} % de précision.</p>
       ${reussis ? `<p class="petit-texte brillant-texte">✨ Tu as joué ${reussis} coup${reussis > 1 ? 's' : ''} brillant${reussis > 1 ? 's' : ''} !!</p>` : ''}
       ${manques.length ? `<div class="occasions"><div class="petit-texte"><strong>✨ ${manques.length} coup${manques.length > 1 ? 's' : ''} brillant${manques.length > 1 ? 's' : ''} à retrouver</strong></div>
         <div class="boutons" style="margin-top:8px">${manques.map((k) => `<button class="bouton petit" data-defi="${k}">Coup ${numero(k)}</button>`).join('')}</div></div>` : ''}
-      ${premiere >= 0 ? `<button class="bouton petit secondaire" id="voir-faute" style="margin-top:10px">Voir ta première faute</button>` : '<p class="petit-texte" style="color:var(--vert)">Aucune gaffe ni erreur : bravo !</p>'}`;
-    $('voir-faute')?.addEventListener('click', () => naviguer(premiere + 1));
+      ${premiere >= 0 ? '' : '<p class="petit-texte" style="color:var(--vert)">Aucune gaffe ni erreur : bravo !</p>'}`;
+    $('faute-prec')?.addEventListener('click', () => allerFaute(fautes, -1));
+    $('faute-suiv')?.addEventListener('click', () => allerFaute(fautes, 1));
+    majFautes();
     if (!lecture && courant === 0 && param('analyse.resumeVocal')) {
       const n = (k, mot) => `${k} ${mot}${k > 1 ? 's' : ''}`;
       const brillance = (reussis ? ` Tu as joué ${n(reussis, 'coup')} brillant${reussis > 1 ? 's' : ''}, bravo !` : '')

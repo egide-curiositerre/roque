@@ -1,6 +1,6 @@
 // Petit répertoire d'ouvertures : la coach reconnaît l'ouverture jouée et donne son idée principale.
 // Les coups sont en notation anglaise (celle de chess.js), séparés par des espaces.
-const OUVERTURES = [
+export const OUVERTURES = [
   { coups: 'e4', nom: "l'ouverture du pion roi", idee: 'Le pion prend le centre et libère ta dame et ton fou.' },
   { coups: 'd4', nom: "l'ouverture du pion dame", idee: 'Le pion prend le centre, et il est déjà protégé par ta dame.' },
   { coups: 'c4', nom: "l'ouverture anglaise", idee: 'On contrôle le centre de loin, avec le pion c.' },

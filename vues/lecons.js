@@ -6,6 +6,7 @@ import { ICONES } from '../icones.js';
 import { parler, taire } from '../voix.js';
 import { nomCoup } from '../coach.js';
 import { son } from '../sons.js';
+import { creerReproduction } from '../reproduction.js';
 
 export async function vueLecons(main) {
   const { modules, lecons } = await api('/lecons');
@@ -14,6 +15,7 @@ export async function vueLecons(main) {
   main.innerHTML = `
     <div class="entete-page">
       <div><div class="surtitre">Parcours de A à Z</div><h1>Leçons</h1><p class="doux">${faites} leçon${faites > 1 ? 's' : ''} terminée${faites > 1 ? 's' : ''} sur ${lecons.length}</p></div>
+      <a class="bouton secondaire" href="#/ouvertures">S'entraîner aux ouvertures</a>
       ${prochaine ? `<a class="bouton" href="#/lecons/${prochaine.id}">Continuer : ${echapper(prochaine.titre)}</a>` : '<span class="badge vert">Parcours terminé 🏆</span>'}
     </div>
     <div class="barre" style="margin-bottom:26px"><span style="width:${(100 * faites) / lecons.length}%"></span></div>
@@ -57,6 +59,10 @@ export async function vueLecon(main, params) {
           <button class="bouton secondaire petit" id="seq-suiv" title="Coup suivant">▶</button>
           <span class="doux petit-texte" id="seq-coup" style="align-self:center"></span>
         </div>
+        <div class="boutons" id="boutons-repro" hidden>
+          <button class="bouton secondaire petit" id="repro-indice">💡 Indice</button>
+          <button class="bouton secondaire petit" id="repro-recommencer">↻ Recommencer</button>
+        </div>
         <div class="carte note-sequence" id="seq-note" hidden></div>
         <div class="boutons">
           <button class="bouton secondaire" id="precedent">← Précédent</button>
@@ -66,12 +72,13 @@ export async function vueLecon(main, params) {
       </aside>
     </div>`;
   const $ = (id) => main.querySelector(`#${id}`);
-  const plateau = new Plateau($('plateau'), { prises: { haut: $('prises-haut'), bas: $('prises-bas') }, onCoup: (coup, uci) => coupExercice(uci) });
+  const plateau = new Plateau($('plateau'), { prises: { haut: $('prises-haut'), bas: $('prises-bas') }, onCoup: (coup, uci) => (repro ? repro.coup(uci) : coupExercice(uci)) });
   plateau.autoriser(null);
 
   let etape = 0;
   let exo = null;          // { solution, index, mat, resolu }
   let seq = null;          // { depart, coups, notes, index, lecture }
+  let repro = null;        // reproduction d'une ouverture de mémoire
   let rep = null;          // repérage : { cases, index, explication, bloque }
   const minuteurs = new Set();
   const plusTard = (f, ms) => { const t = setTimeout(() => { minuteurs.delete(t); f(); }, ms); minuteurs.add(t); };
@@ -88,12 +95,14 @@ export async function vueLecon(main, params) {
 
   function afficherEtape() {
     const e = lecon.etapes[etape];
-    exo = null; seq = null; rep = null;
+    repro?.arreter();
+    exo = null; seq = null; rep = null; repro = null;
     $('compteur').textContent = `Étape ${etape + 1} / ${lecon.etapes.length}`;
     $('texte').innerHTML = md(e.texte || '');
     $('statut').textContent = '';
     $('statut').className = 'statut';
     $('controles-sequence').hidden = e.type !== 'sequence';
+    $('boutons-repro').hidden = e.type !== 'reproduction';
     $('seq-note').hidden = true;
     $('precedent').disabled = etape === 0;
     $('suivant').textContent = etape === lecon.etapes.length - 1 ? 'Terminer la leçon ✓' : 'Suivant →';
@@ -113,6 +122,13 @@ export async function vueLecon(main, params) {
       // La consigne est lue, puis la première case est demandée
       parler($('texte').textContent, () => { if (rep && rep.index === 0) demanderCase(); });
       demanderCase(false);
+      return;
+    }
+
+    if (e.type === 'reproduction') {
+      repro = creerReproduction(plateau, { coups: e.coups, cote: e.cote, statut: $('statut') });
+      repro.demarrer();
+      parler($('texte').textContent);
       return;
     }
 
@@ -289,8 +305,10 @@ export async function vueLecon(main, params) {
   $('seq-debut').addEventListener('click', () => { arreterLecture(); seq.index = 0; majSequence(); taire(); boutonLecture(); });
   $('seq-prec').addEventListener('click', () => { arreterLecture(); seq.index = Math.max(0, seq.index - 1); direSequence(majSequence()); boutonLecture(); });
   $('seq-suiv').addEventListener('click', () => { arreterLecture(); direSequence(avancer()); boutonLecture(); });
+  $('repro-indice').addEventListener('click', () => repro?.indice());
+  $('repro-recommencer').addEventListener('click', () => repro?.demarrer());
   $('ecouter').addEventListener('click', lireEtape);
 
   afficherEtape();
-  return () => { minuteurs.forEach(clearTimeout); taire(); };
+  return () => { minuteurs.forEach(clearTimeout); repro?.arreter(); taire(); };
 }

@@ -208,12 +208,13 @@ export function creerEntrainement(db, { maintenant = () => Date.now() } = {}) {
 
   // ---------- Plan du jour ----------
 
-  function plan(lecons) {
+  function plan(lecons, jourDemande = null) {
     const j = joueur();
     if (!j) return null;
-    const aujourdhui = jourLocal(new Date(maintenant()));
+    const aujourdhui = jourDemande || jourLocal(new Date(maintenant()));
     // Le plan est figé pour la journée (même thème du matin au soir)
     let base = reglage(`plan:${aujourdhui}`);
+    if (!base && jourDemande) return null;   // jour passé sans plan : rien à recalculer
     if (!base) {
       const lecon = lecons.find((l) => !db.prepare('SELECT 1 FROM lecons_faites WHERE lecon_id = ?').get(l.id));
       base = {
@@ -252,7 +253,29 @@ export function creerEntrainement(db, { maintenant = () => Date.now() } = {}) {
 
     const total = etapes.reduce((s, e) => s + e.objectif, 0);
     const realise = etapes.reduce((s, e) => s + Math.min(e.fait, e.objectif), 0);
-    return { jour: aujourdhui, etapes, avancement: Math.round((100 * realise) / total) };
+    const avancement = Math.round((100 * realise) / total);
+    // Plan du jour terminé en entier : on le retient pour le calendrier (jamais effacé)
+    if (avancement === 100 && !reglage(`plan-fini:${aujourdhui}`)) definir(`plan-fini:${aujourdhui}`, true);
+    return { jour: aujourdhui, etapes, avancement };
+  }
+
+  // Calendrier d'un mois : un jour est « fini » seulement si TOUT le plan du jour a été réalisé (aucune coche à la main)
+  function calendrier(lecons, mois) {
+    const aujourdhui = jourLocal(new Date(maintenant()));
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mois || '')) mois = aujourdhui.slice(0, 7);
+    const [an, m] = mois.split('-').map(Number);
+    const nbJours = new Date(an, m, 0).getDate();
+    const jours = [];
+    for (let d = 1; d <= nbJours; d++) {
+      const jour = `${mois}-${String(d).padStart(2, '0')}`;
+      let fini = false;
+      if (jour <= aujourdhui) {
+        fini = !!reglage(`plan-fini:${jour}`);
+        if (!fini) fini = plan(lecons, jour)?.avancement === 100;
+      }
+      jours.push({ jour, fini });
+    }
+    return { mois, aujourdhui, premierJour: (new Date(an, m - 1, 1).getDay() + 6) % 7, jours, total: jours.filter((x) => x.fini).length };
   }
 
   function historique(jours = 120) {
@@ -286,7 +309,7 @@ export function creerEntrainement(db, { maintenant = () => Date.now() } = {}) {
   }
 
   return {
-    joueur, demarrer, etat, probleme, enregistrerTentative, plan, historique, activiteParJour,
+    joueur, demarrer, etat, probleme, enregistrerTentative, plan, calendrier, historique, activiteParJour,
     statsThemes, enregistrerPartie, enregistrerAnalyse, eloPartie, reglage, definir,
   };
 }

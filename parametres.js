@@ -18,6 +18,9 @@ export const DEFAUTS = {
   // Records de l'entraînement « Les cases » (60 secondes)
   'cases.recordNommer': 0,
   'cases.recordTrouver': 0,
+  // Records des entraînements « Ouvertures » (sur 10)
+  'ouvertures.recordCoup': 0,
+  'ouvertures.recordNom': 0,
   // Notifications du Mac
   'notif.rappel': false,
   'notif.heure': '18:00',

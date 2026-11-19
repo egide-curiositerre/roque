@@ -756,3 +756,27 @@ textarea.champ { resize: vertical; font-weight: 500; font-size: 15px; }
   .navigation::-webkit-scrollbar { display: none; }
   .navigation a { flex: 0 0 auto; min-width: 66px; }
 }
+
+/* Calendrier de l'accueil : jours non cliquables, cochés automatiquement */
+.grille-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; max-width: 420px; }
+.entete-cal { text-align: center; font-size: 12px; color: var(--tres-doux); font-weight: 700; }
+.jour-cal { position: relative; aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px; font-weight: 600; font-size: 14px;
+  background: var(--surface-2); border: 1px solid var(--bord); color: var(--doux); pointer-events: none; user-select: none; }
+.jour-cal.futur { opacity: .45; }
+.jour-cal.aujourdhui { border-color: var(--accent); color: var(--texte); box-shadow: 0 0 0 1px var(--accent-trait); }
+.jour-cal.fini { background: var(--vert-voile); border-color: var(--vert-trait); color: var(--vert); }
+.jour-cal.fini svg { width: 18px; height: 18px; }
+.jour-cal small { position: absolute; top: 2px; left: 5px; font-size: 9px; opacity: .8; }
+
+.fautes-liste { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+/* Pastille cliquable : passe à la faute suivante de ce type */
+.badge-bouton { cursor: pointer; transition: transform .12s, filter .12s; }
+.badge-bouton:hover { filter: brightness(.95); transform: translateY(-1px); }
+.badge-bouton::after { content: '▸'; opacity: .7; }
+/* Faute affichée sur l'échiquier */
+.fautes-liste .faute-active { outline: 2px solid rgb(var(--accent-rgb)); outline-offset: 1px; background: var(--accent-voile); }
+.nav-fautes { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.nav-fautes #faute-pos { flex: 1; text-align: center; font-weight: 600; white-space: nowrap; }
+@media (max-width: 760px) {
+  .fautes-liste .bouton.petit, .nav-fautes .bouton.petit { min-height: 40px; }   /* plus facile à toucher au doigt */
+}

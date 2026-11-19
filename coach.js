@@ -165,16 +165,17 @@ export function expliquer(k, { coups, positions, evals, moi }) {
     }
   }
 
-  // Bilan de la position après le coup, de ton point de vue
-  const gainMoi = moi === 'w' ? apres.gainBlancs : 100 - apres.gainBlancs;
-  if (apres.ligne.mate !== undefined && apres.ligne.pv?.length) {
-    const auTrait = apres.trait === moi;
+  // Bilan de la position après le coup, de ton point de vue : dit SEULEMENT quand il change
+  // (sinon la barre d'évaluation et les flèches suffisent, pas de « position gagnante » à chaque coup)
+  const gainMoi = (e) => (moi === 'w' ? e.gainBlancs : 100 - e.gainBlancs);
+  const matPour = (e) => (e.ligne.mate !== undefined && e.ligne.pv?.length ? (e.ligne.mate > 0) === (e.trait === moi) : null);
+  if (matPour(apres) !== null) {
     const n = Math.abs(apres.ligne.mate);
-    const pourMoi = (apres.ligne.mate > 0) === auTrait;
-    if (!grave) dire(() => (pourMoi ? `Tu as un mat forcé en ${pluriel(n, 'coup')} !` : `Attention : l'ordinateur a un mat forcé en ${pluriel(n, 'coup')}.`));
-  } else if (!grave || !toi) {
-    const s = situation(gainMoi);
-    dire(() => `${s[0].toUpperCase()}${s.slice(1)}.`);
+    const pourMoi = matPour(apres);
+    if (!grave && matPour(avant) !== pourMoi) dire(() => (pourMoi ? `Tu as un mat forcé en ${pluriel(n, 'coup')} !` : `Attention : l'ordinateur a un mat forcé en ${pluriel(n, 'coup')}.`));
+  } else if ((!grave || !toi) && situation(gainMoi(apres)) !== situation(gainMoi(avant))) {
+    const s = situation(gainMoi(apres));
+    dire(() => `Maintenant, ${s}.`);
   }
   return { ...rendu(), verdict, alternative };
 }
