@@ -1,6 +1,7 @@
 // Exercice « reproduire l'ouverture de mémoire » : le joueur joue son camp dans l'ordre, l'adversaire répond tout seul.
 // Utilisé par l'étape « reproduction » des leçons et par l'écran « Réviser mes ouvertures ».
 import { parler } from './voix.js';
+import { compter } from './outils.js';
 import { son } from './sons.js';
 
 /**
@@ -33,7 +34,7 @@ export function creerReproduction(plateau, { coups, cote, statut, surFin }) {
     plateau.fleches([]);
     const parfait = erreurs === 0 && indices === 0;
     const note = parfait ? 'Sans aucune faute ni indice : ouverture parfaitement mémorisée !'
-      : `${erreurs} erreur${erreurs > 1 ? 's' : ''}, ${indices} indice${indices > 1 ? 's' : ''} : refais-la pour viser le sans-faute.`;
+      : `${compter(erreurs, 'erreur')}, ${compter(indices, 'indice')} : refais-la pour viser le sans-faute.`;
     son.succes();
     dire(`✓ Ouverture terminée ! ${note}`, 'statut vert');
     parler(`Ouverture terminée ! ${note}`);

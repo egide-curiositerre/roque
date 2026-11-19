@@ -5,7 +5,7 @@
 //  4. Après l'ouverture : on rejoue ton ouverture puis tu continues la partie contre l'ordinateur
 import { Chess } from '/roque/lib/chess.js/chess.js';
 import { Plateau, uciVersCoup } from '../echiquier.js';
-import { api, echapper, sanFr } from '../outils.js';
+import { api, echapper, sanFr, compter } from '../outils.js';
 import { taire, parler } from '../voix.js';
 import { creerReproduction } from '../reproduction.js';
 import { OUVERTURES } from '../ouvertures.js';
@@ -52,7 +52,7 @@ export async function vueOuvertures(main, params) {
     <div class="entete-page">
       <div><div class="surtitre">Entraînement</div><h1>Les ouvertures</h1>
         <p class="doux">${apprises.length
-          ? `Tu connais ${apprises.length} ouverture${apprises.length > 1 ? 's' : ''} : révise-les, teste-toi, puis joue la suite.`
+          ? `Tu connais ${compter(apprises.length, 'ouverture')} : révise-les, teste-toi, puis joue la suite.`
           : 'Apprends d\'abord une ouverture en leçon : les entraînements s\'ouvriront ici.'}</p></div>
       <nav class="onglets">${MODES.map((m) => `<a class="${m.id === mode ? 'actif' : ''}" href="#/ouvertures?mode=${m.id}">${m.titre}</a>`).join('')}</nav>
     </div>

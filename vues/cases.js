@@ -5,6 +5,7 @@ import { Plateau } from '../echiquier.js';
 import { ICONES } from '../icones.js';
 import { son, confettis } from '../sons.js';
 import { parler, taire } from '../voix.js';
+import { compter } from '../outils.js';
 import { param, changer } from '../parametres.js';
 
 const DUREE_MS = 60 * 1000;
@@ -212,10 +213,10 @@ export async function vueCases(main, params) {
     $('statut').className = 'statut vert';
     const uniques = [...new Set(ratees)];
     $('bilan').hidden = false;
-    $('bilan').innerHTML = `<strong>${score} bonne${score > 1 ? 's' : ''} réponse${score > 1 ? 's' : ''}, ${erreurs} erreur${erreurs > 1 ? 's' : ''}</strong>
+    $('bilan').innerHTML = `<strong>${compter(score, 'bonne réponse')}, ${compter(erreurs, 'erreur')}</strong>
       ${uniques.length ? `<p class="doux petit-texte" style="margin:.5em 0 0">Cases à revoir : <strong>${uniques.join(', ')}</strong></p>` : '<p class="doux petit-texte" style="margin:.5em 0 0">Aucune erreur, bravo !</p>'}`;
     plateau.fleches(uniques.map((c) => ({ orig: c, brush: 'red' })));
-    parler(`Temps écoulé ! ${score} bonne${score > 1 ? 's' : ''} réponse${score > 1 ? 's' : ''}.${nouveau ? ' Nouveau record, bravo !' : ''}`);
+    parler(`Temps écoulé ! ${compter(score, 'bonne réponse')}.${nouveau ? ' Nouveau record, bravo !' : ''}`);
   }
 
   $('demarrer').addEventListener('click', () => {

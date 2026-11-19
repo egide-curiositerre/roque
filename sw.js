@@ -1,6 +1,6 @@
 // Service worker : tous les fichiers de Roque sont gardés dans le téléphone, l'appli marche sans connexion.
 // VERSION et FICHIERS sont remplis par scripts/construire-telephone.js à chaque nouvelle version.
-const VERSION = '20261119102407';
+const VERSION = '20261119102827';
 const FICHIERS = [
  "/roque/app.js",
  "/roque/apparence.js",

@@ -4,7 +4,7 @@
 import { Chess } from '/roque/lib/chess.js/chess.js';
 import { Plateau, DEPART } from '../echiquier.js';
 import { moteur, pourcentageGain } from '../moteur.js';
-import { api, echapper, sanFr } from '../outils.js';
+import { api, echapper, sanFr, compter } from '../outils.js';
 import { ICONES } from '../icones.js';
 import { son, confettis } from '../sons.js';
 import { parler, taire, voixActive } from '../voix.js';
@@ -34,7 +34,7 @@ const hasard = (liste) => liste[Math.floor(Math.random() * liste.length)];
 const nc = (c, o) => (o ? nomCoup(c, true) : `<strong>${echapper(sanFr(c.san))}</strong>`);
 const kc = (sq, o) => (o ? kase(sq, true) : `<strong>${sq}</strong>`);
 // « une erreur » et non « 1 erreur » (lu « un erreur » à voix haute)
-const pluriel = (n, mot) => `${n === 1 && ['erreur', 'gaffe', 'imprécision'].includes(mot) ? 'une' : n} ${mot}${n > 1 ? 's' : ''}`;
+const pluriel = (n, mot) => compter(n, mot);
 
 // Portrait de la coach (dessin vectoriel ; la bouche bouge quand elle parle)
 const PORTRAIT = `<svg class="portrait" viewBox="0 0 120 120" aria-hidden="true">

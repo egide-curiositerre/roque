@@ -1,6 +1,6 @@
 // Coach : explique chaque coup en français, à l'écrit et à voix haute
 import { Chess } from '/roque/lib/chess.js/chess.js';
-import { echapper, sanFr } from './outils.js';
+import { echapper, sanFr, compter } from './outils.js';
 
 // La voix (voix de femme, commune à tout le jeu) est dans voix.js
 export { parler, taire, preparer, voixActive, basculerVoix, voixPossible } from './voix.js';
@@ -12,7 +12,7 @@ const LETTRES = { a: 'a', b: 'bé', c: 'cé', d: 'dé', e: 'e', f: 'èf', g: 'g�
 
 // Chaque texte existe en deux versions : à lire (cases « e4 ») et à dire (« e 4 », « cé 5 »)
 export const kase = (c, oral) => (oral ? `${LETTRES[c[0]]} ${c[1]}` : c);
-const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+const pluriel = (n, mot) => compter(n, mot);
 
 export function piece(type, couleur, moi) {
   const [nom, feminin] = PIECES[type];

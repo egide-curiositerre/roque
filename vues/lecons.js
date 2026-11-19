@@ -1,7 +1,7 @@
 // Leçons : parcours de A à Z, et lecteur de leçon pas à pas
 import { Chess } from '/roque/lib/chess.js/chess.js';
 import { Plateau, DEPART, uciVersCoup } from '../echiquier.js';
-import { api, echapper, md, sanFr, toast } from '../outils.js';
+import { api, echapper, md, sanFr, toast, compter } from '../outils.js';
 import { ICONES } from '../icones.js';
 import { parler, taire } from '../voix.js';
 import { nomCoup } from '../coach.js';
@@ -14,7 +14,7 @@ export async function vueLecons(main) {
   const prochaine = lecons.find((l) => !l.faite);
   main.innerHTML = `
     <div class="entete-page">
-      <div><div class="surtitre">Parcours de A à Z</div><h1>Leçons</h1><p class="doux">${faites} leçon${faites > 1 ? 's' : ''} terminée${faites > 1 ? 's' : ''} sur ${lecons.length}</p></div>
+      <div><div class="surtitre">Parcours de A à Z</div><h1>Leçons</h1><p class="doux">${compter(faites, 'leçon')} terminée${faites > 1 ? 's' : ''} sur ${lecons.length}</p></div>
       <a class="bouton secondaire" href="#/ouvertures">S'entraîner aux ouvertures</a>
       ${prochaine ? `<a class="bouton" href="#/lecons/${prochaine.id}">Continuer : ${echapper(prochaine.titre)}</a>` : '<span class="badge vert">Parcours terminé 🏆</span>'}
     </div>

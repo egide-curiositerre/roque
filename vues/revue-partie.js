@@ -4,7 +4,7 @@
 import { Chess } from '/roque/lib/chess.js/chess.js';
 import { Plateau, sonDuCoup } from '../echiquier.js';
 import { moteur, pourcentageGain, texteEval } from '../moteur.js';
-import { api, echapper, sanFr } from '../outils.js';
+import { api, echapper, sanFr, compter } from '../outils.js';
 import { ICONES } from '../icones.js';
 import { surChangementVoix } from '../voix.js';
 import { expliquer, conseil, parler, preparer, taire, voixActive, basculerVoix, voixPossible, estSacrifice, pieceSacrifiee, nomCoup } from '../coach.js';
@@ -236,7 +236,7 @@ export async function vueAnalyse(main, params) {
     main.querySelectorAll('[data-faute]').forEach((b) => b.classList.toggle('faute-active', Number(b.dataset.faute) === ici));
     if (!$('faute-pos')) return;
     const n = fautes.indexOf(ici);
-    $('faute-pos').textContent = n >= 0 ? `Faute ${n + 1} sur ${fautes.length}` : `${fautes.length} faute${fautes.length > 1 ? 's' : ''}`;
+    $('faute-pos').textContent = n >= 0 ? `Faute ${n + 1} sur ${fautes.length}` : compter(fautes.length, 'faute');
     $('faute-suiv').textContent = n < 0 && !fautes.some((x) => x > ici) ? 'Première faute ▶' : 'Faute suivante ▶';
   }
   $('coups').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) naviguer(Number(b.dataset.i)); });
@@ -501,7 +501,7 @@ export async function vueAnalyse(main, params) {
     // Pastille cliquable (passe d'une faute de ce type à la suivante) + un bouton par coup fautif
     const bout = (cle, cl, mot) => {
       const ks = liste(cle);
-      const pastille = `${ks.length} ${mot}${ks.length > 1 ? 's' : ''}`;
+      const pastille = compter(ks.length, mot, { zero: true });
       return `<div class="fautes-liste">${ks.length
         ? `<button class="badge ${cl} badge-bouton" data-type-faute="${cle}" title="Aller à la ${mot} suivante">${pastille}</button>`
         : `<span class="badge ${cl}">${pastille}</span>`}${ks.map((k) => `<button class="bouton petit secondaire" data-faute="${k}" title="Revenir à ce coup">${numero(k)} ${echapper(sanFr(coups[k].san))}</button>`).join('')}</div>`;
@@ -530,12 +530,7 @@ export async function vueAnalyse(main, params) {
     $('faute-suiv')?.addEventListener('click', () => allerFaute(fautes, 1));
     majFautes();
     if (!lecture && courant === 0 && param('analyse.resumeVocal')) {
-      // À l'oral, « 1 erreur » serait lu « un erreur » : on écrit « une » pour les mots féminins
-      const FEMININS = ['gaffe', 'erreur', 'imprécision'];
-      const n = (k, mot) => {
-        const f = FEMININS.includes(mot);
-        return `${f && k === 1 ? 'une' : f && k === 0 ? 'aucune' : k} ${mot}${k > 1 ? 's' : ''}`;
-      };
+      const n = (k, mot) => compter(k, mot, { zero: true });
       const brillance = (reussis ? ` Tu as joué ${n(reussis, 'coup')} brillant${reussis > 1 ? 's' : ''}, bravo !` : '')
         + (manques.length ? ` Et il y avait ${n(manques.length, 'coup')} brillant${manques.length > 1 ? 's' : ''} à trouver : essaie de ${manques.length > 1 ? 'les' : 'le'} retrouver.` : '');
       parler(`Analyse terminée. Ta précision est de ${String(precision).replace('.', ',')} pour cent, avec ${n(compte[moi].gaffe, 'gaffe')}, ${n(compte[moi].erreur, 'erreur')} et ${n(compte[moi].imprecision, 'imprécision')}.${brillance} Appuie sur Lecture pour que je t'explique la partie coup par coup.`);

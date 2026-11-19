@@ -51,3 +51,13 @@ const LETTRES_FR = { N: 'C', B: 'F', R: 'T', Q: 'D', K: 'R' };
 export function sanFr(san) {
   return String(san ?? '').replace(/[NBRQK]/g, (l) => LETTRES_FR[l]);
 }
+
+// « une erreur », « 3 erreurs », « aucune erreur » : accord en nombre ET en genre
+const MOTS_FEMININS = new Set(['erreur', 'faute', 'gaffe', 'imprécision', 'partie', 'leçon', 'ouverture', 'révision', 'réponse', 'bonne réponse', 'étoile', 'minute', 'seconde', 'heure', 'pièce', 'case', 'question', 'victoire', 'défaite', 'série', 'tentative']);
+export function compter(n, mot, { zero = false } = {}) {
+  const f = MOTS_FEMININS.has(mot);
+  const pluriel = n > 1 ? mot.split(' ').map((m) => `${m}s`).join(' ') : mot;
+  if (n === 1 && f) return `une ${mot}`;
+  if (n === 0 && zero) return `${f ? 'aucune' : 'aucun'} ${mot}`;
+  return `${n} ${pluriel}`;
+}

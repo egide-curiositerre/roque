@@ -45,7 +45,10 @@ export function surChangementVoix(f) {
   return () => ecouteurs.delete(f);
 }
 
-const propre = (t) => String(t || '').replace(/\s+/g, ' ').trim();
+// Mots féminins : « 1 erreur » serait lu « un erreur » → on écrit « une erreur » avant de parler
+const FEMININS = 'erreur|faute|gaffe|imprécision|partie|leçon|ouverture|révision|réponse|bonne|étoile|minute|seconde|heure|fois|pièce|case|question|victoire|défaite|nulle|série|tentative|semaine|journée|position|menace|prise|dame|tour|attaque|chance|ligne|colonne|diagonale|occasion';
+const UNE = new RegExp(`(^|[^\\d,.])1 (?=(?:${FEMININS})s?\\b)`, 'giu');
+const propre = (t) => String(t || '').replace(/\s+/g, ' ').replace(UNE, '$1une ').trim();
 const adresse = (texte) => `/api/voix?t=${encodeURIComponent(propre(texte))}`;
 
 /** Fait préparer une phrase à l'avance (seulement utile pour les fichiers audio). */
