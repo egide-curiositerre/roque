@@ -530,7 +530,12 @@ export async function vueAnalyse(main, params) {
     $('faute-suiv')?.addEventListener('click', () => allerFaute(fautes, 1));
     majFautes();
     if (!lecture && courant === 0 && param('analyse.resumeVocal')) {
-      const n = (k, mot) => `${k} ${mot}${k > 1 ? 's' : ''}`;
+      // À l'oral, « 1 erreur » serait lu « un erreur » : on écrit « une » pour les mots féminins
+      const FEMININS = ['gaffe', 'erreur', 'imprécision'];
+      const n = (k, mot) => {
+        const f = FEMININS.includes(mot);
+        return `${f && k === 1 ? 'une' : f && k === 0 ? 'aucune' : k} ${mot}${k > 1 ? 's' : ''}`;
+      };
       const brillance = (reussis ? ` Tu as joué ${n(reussis, 'coup')} brillant${reussis > 1 ? 's' : ''}, bravo !` : '')
         + (manques.length ? ` Et il y avait ${n(manques.length, 'coup')} brillant${manques.length > 1 ? 's' : ''} à trouver : essaie de ${manques.length > 1 ? 'les' : 'le'} retrouver.` : '');
       parler(`Analyse terminée. Ta précision est de ${String(precision).replace('.', ',')} pour cent, avec ${n(compte[moi].gaffe, 'gaffe')}, ${n(compte[moi].erreur, 'erreur')} et ${n(compte[moi].imprecision, 'imprécision')}.${brillance} Appuie sur Lecture pour que je t'explique la partie coup par coup.`);
