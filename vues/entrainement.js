@@ -33,7 +33,8 @@ const hasard = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Un coup ou une case dans une phrase : « Cf6 » à l'écrit (en gras), « cavalier en èf 6 » à l'oral
 const nc = (c, o) => (o ? nomCoup(c, true) : `<strong>${echapper(sanFr(c.san))}</strong>`);
 const kc = (sq, o) => (o ? kase(sq, true) : `<strong>${sq}</strong>`);
-const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+// « une erreur » et non « 1 erreur » (lu « un erreur » à voix haute)
+const pluriel = (n, mot) => `${n === 1 && ['erreur', 'gaffe', 'imprécision'].includes(mot) ? 'une' : n} ${mot}${n > 1 ? 's' : ''}`;
 
 // Portrait de la coach (dessin vectoriel ; la bouche bouge quand elle parle)
 const PORTRAIT = `<svg class="portrait" viewBox="0 0 120 120" aria-hidden="true">
